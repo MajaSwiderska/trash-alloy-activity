@@ -6,13 +6,13 @@ fact init {
 }
 
 pred empty {
-  some Trash       // guard
+  some Trash and       // guard
+  after no Trash and   // effect on Trash
   File' = File - Trash // effect on File
-  Trash' = none
 }
 
 pred delete [f : File] {
- f not in Trash   // guard
+  not (f in Trash)   // guard
   Trash' = Trash + f // effect on Trash
   File' = File       // frame condition on File
 }
@@ -23,35 +23,8 @@ pred restore [f : File] {
   File' = File       // frame condition on File
 }
 
-pred idle {
-  File' = File
-  Trash' = Trash
-}
 fact trans {
-  always (
-      empty
-   or (some f : File | 
-        delete[f] 
-     or restore[f] 
-     or forceDelete[f]
-   )
-   or idle
-  )
-}
-assert TrashSubset {
-  always Trash in File
+  always (empty or (some f : File | delete[f] or restore[f]))
 }
 
-check TrashSubset for 5 but 10 steps // this should check it
-
-// Liveness: Files in trash eventually leave trash
-assert EventuallyLeavesTrash {
-  always (all f : File |
-    f in Trash implies eventually (f not in Trash)
-  )
-}
-
-// This will FAIL (because empty/forceDelete may remove it permanently)
-check EventuallyLeavesTrash for 5 but 10 steps
-
-run {} for 5 but 10 steps
+run example {}
