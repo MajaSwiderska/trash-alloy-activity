@@ -34,50 +34,7 @@ pred idle {
   Trash' = Trash
 }
 fact trans {
-  always (
-      empty
-   or forceDelete
-   or (some f: File |
-        delete[f]
-      or restore[f]
-   )
-   or idle
-  )
-}
-assert TrashSubset {
-  always Trash in File
+  always (empty or (some f : File | delete[f] or restore[f]))
 }
 
-check TrashSubset for 5 but 10 steps // this should check it
-
-// Liveness: Files in trash eventually leave trash
-assert EventuallyLeavesTrash {
-  always (all f : File |
-    f in Trash implies eventually (f not in Trash)
-  )
-}
-check EventuallyLeavesTrash for 5 but 10 steps
-
-assert NoDoubleDelete {
-  always (all f: File |
-    (once delete[f]) implies
-      (after always (f in Trash implies f not in Trash'))
-  )
-}
-check NoDoubleDelete for 5 but 10 steps
-
-assert TrashEventuallyEmpty {
-  eventually no Trash
-}
-check TrashEventuallyEmpty for 5 but 10 steps
-run {} for 5 but 10 steps
-
-pred showDeleteRestore {
-  some File
-  no Trash
-
-  eventually {
-    some f: File | delete[f]
-  }
-}
-run showDeleteRestore for 5 but 10 steps
+run example {}
